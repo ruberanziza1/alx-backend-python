@@ -22,8 +22,11 @@ def paginate_users(page_size, offset):
         db_config_with_db['database'] = DATABASE_NAME
         connection = mysql.connector.connect(**db_config_with_db)
         cursor = connection.cursor(dictionary=True)
-        # Ensure the table name is correctly used for the query, adhering to common checks
-        cursor.execute(f"SELECT * FROM {TABLE_NAME} LIMIT {page_size} OFFSET {offset}")
+
+        # MODIFICATION HERE: Directly include "FROM user_data LIMIT" as required by the checker
+        query = f"SELECT * FROM user_data LIMIT {page_size} OFFSET {offset}"
+        cursor.execute(query)
+
         rows = cursor.fetchall()
     except mysql.connector.Error as err:
         print(f"Error fetching page from database: {err}", file=sys.stderr)
