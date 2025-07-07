@@ -1,6 +1,10 @@
 import sqlite3
 import functools
 import os # Import os for file cleanup
+import logging # Import the logging module
+
+# Configure basic logging to output to console with a timestamp
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 #### decorator to log SQL queries
 def log_queries(func):
@@ -21,15 +25,9 @@ def log_queries(func):
             query = args[0]
 
         if query:
-            print(f"--- Logging Query ---")
-            print(f"Function: {func.__name__}")
-            print(f"SQL Query: {query}")
-            print(f"---------------------")
+            logging.info(f"Function: {func.__name__} - Executing SQL Query: {query}")
         else:
-            print(f"--- Logging Query ---")
-            print(f"Function: {func.__name__}")
-            print(f"No identifiable SQL query argument found.")
-            print(f"---------------------")
+            logging.info(f"Function: {func.__name__} - No identifiable SQL query argument found for logging.")
 
         # Execute the original function with its arguments
         return func(*args, **kwargs)
@@ -62,7 +60,7 @@ def setup_database():
     cursor.execute("INSERT OR IGNORE INTO users (name, email) VALUES ('Charlie', 'charlie@example.com')")
     conn.commit()
     conn.close()
-    print(f"Database '{DATABASE_NAME}' setup complete with dummy data.")
+    logging.info(f"Database '{DATABASE_NAME}' setup complete with dummy data.")
 
 # Ensure the database is set up before running the decorated function
 setup_database()
@@ -82,22 +80,21 @@ def fetch_all_users(query):
     return [dict(row) for row in results] # Convert rows to dictionaries for easier viewing
 
 #### fetch users while logging the query
-print("\n--- Calling fetch_all_users with 'SELECT * FROM users' ---")
+logging.info("\n--- Calling fetch_all_users with 'SELECT * FROM users' ---")
 users = fetch_all_users(query="SELECT * FROM users")
-print("Fetched users:")
+logging.info("Fetched users:")
 for user in users:
-    print(user)
+    logging.info(user)
 
-print("\n--- Calling fetch_all_users with 'SELECT name, email FROM users WHERE id = 1' ---")
+logging.info("\n--- Calling fetch_all_users with 'SELECT name, email FROM users WHERE id = 1' ---")
 specific_user = fetch_all_users(query="SELECT name, email FROM users WHERE id = 1")
-print("Fetched specific user:")
+logging.info("Fetched specific user:")
 for user in specific_user:
-    print(user)
+    logging.info(user)
 
 # --- Clean up the database file after demonstration (optional) ---
 # Uncomment the following lines if you want the database file to be removed
 # after each run of this script.
 # if os.path.exists(DATABASE_NAME):
 #     os.remove(DATABASE_NAME)
-#     print(f"\nCleaned up database file: {DATABASE_NAME}")
-
+#     logging.info(f"\nCleaned up database file: {DATABASE_NAME}")
