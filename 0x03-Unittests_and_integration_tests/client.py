@@ -1,41 +1,58 @@
-# client.py
-import requests
+#!/usr/bin/env python3
+"""A github org client
+"""
+from typing import (
+    List,
+    Dict,
+)
 
-def get_json(url: str):
-    """Fetches JSON data from a given URL."""
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json()
+from utils import (
+    get_json,
+    access_nested_map,
+    memoize,
+)
+
 
 class GithubOrgClient:
-    """A client to interact with the GitHub API for organizations."""
-    def __init__(self, org_name: str):
-        self.org_name = org_name
-        self._org = None
+    """A Githib org client
+    """
+    ORG_URL = "https://api.github.com/orgs/{org}"
 
-    @property
-    def org(self) -> dict:
-        """Returns the organization payload from the GitHub API."""
-        if self._org is None:
-            self._org = get_json(f"https://api.github.com/orgs/{self.org_name}")
-        return self._org
+    def __init__(self, org_name: str) -> None:
+        """Init method of GithubOrgClient"""
+        self._org_name = org_name
+
+    @memoize
+    def org(self) -> Dict:
+        """Memoize org"""
+        return get_json(self.ORG_URL.format(org=self._org_name))
 
     @property
     def _public_repos_url(self) -> str:
-        """Returns the URL for public repositories of the organization."""
+        """Public repos URL"""
         return self.org["repos_url"]
 
-    def public_repos(self, class_name=None) -> list:
-        """
-        Returns a list of public repositories for the organization.
-        Optionally filters by projects whose name contains class_name.
-        """
-        repos_payload = get_json(self._public_repos_url)
-        
-        repos = []
-        for repo in repos_payload:
-            if class_name is None:
-                repos.append(repo["name"])
-            elif class_name in repo["name"]:
-                repos.append(repo["name"])
-        return repos
+    @memoize
+    def repos_payload(self) -> Dict:
+        """Memoize repos payload"""
+        return get_json(self._public_repos_url)
+
+    def public_repos(self, license: str = None) -> List[str]:
+        """Public repos"""
+        json_payload = self.repos_payload
+        public_repos = [
+            repo["name"] for repo in json_payload
+            if license is None or self.has_license(repo, license)
+        ]
+
+        return public_repos
+
+    @staticmethod
+    def has_license(repo: Dict[str, Dict], license_key: str) -> bool:
+        """Static: has_license"""
+        assert license_key is not None, "license_key cannot be None"
+        try:
+            has_license = access_nested_map(repo, ("license", "key")) == license_key
+        except KeyError:
+            return False
+        return has_license
