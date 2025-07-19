@@ -1,43 +1,75 @@
 #!/usr/bin/env python3
-"""Utility functions for tests."""
+"""Generic utilities for github org client.
+"""
+import requests
+from functools import wraps
+from typing import (
+    Mapping,
+    Sequence,
+    Any,
+    Dict,
+    Callable,
+)
 
-def access_nested_map(nested_map: dict, path: list):
-    """
-    Accesses a nested map using a list of keys as the path.
-    """
-    current_map = nested_map
-    try:
-        for key in path:
-            current_map = current_map[key]
-        return current_map
-    except (KeyError, TypeError) as e:
-        raise ValueError(f"Path '{path}' not found in map: {e}")
+__all__ = [
+    "access_nested_map",
+    "get_json",
+    "memoize",
+]
 
-# If your project uses get_json from utils, keep this.
-# Otherwise, it might not be strictly necessary for THIS specific error,
-# but it's common in these types of projects.
-def get_json(url: str):
+
+def access_nested_map(nested_map: Mapping, path: Sequence) -> Any:
+    """Access nested map with key path.
+    Parameters
+    ----------
+    nested_map: Mapping
+        A nested map
+    path: Sequence
+        a sequence of key representing a path to the value
+    Example
+    -------
+    >>> nested_map = {"a": {"b": {"c": 1}}}
+    >>> access_nested_map(nested_map, ["a", "b", "c"])
+    1
     """
-    Fetches JSON data from a given URL.
+    for key in path:
+        if not isinstance(nested_map, Mapping):
+            raise KeyError(key)
+        nested_map = nested_map[key]
+
+    return nested_map
+
+
+def get_json(url: str) -> Dict:
+    """Get JSON from remote URL.
     """
-    import requests # Import requests here if not imported globally in utils
     response = requests.get(url)
-    response.raise_for_status()
     return response.json()
 
-# If your project uses memoize, keep this.
-def memoize(fn):
-    """
-    Decorator to memoize a method's results.
-    """
-    attr_name = '_memoized_results_' + fn.__name__
 
-    def wrapper(self, *args):
+def memoize(fn: Callable) -> Callable:
+    """Decorator to memoize a method.
+    Example
+    -------
+    class MyClass:
+        @memoize
+        def a_method(self):
+            print("a_method called")
+            return 42
+    >>> my_object = MyClass()
+    >>> my_object.a_method
+    a_method called
+    42
+    >>> my_object.a_method
+    42
+    """
+    attr_name = "_{}".format(fn.__name__)
+
+    @wraps(fn)
+    def memoized(self):
+        """"memoized wraps"""
         if not hasattr(self, attr_name):
-            setattr(self, attr_name, {})
-        
-        key = args 
-        if key not in getattr(self, attr_name):
-            getattr(self, attr_name)[key] = fn(self, *args)
-        return getattr(self, attr_name)[key]
-    return wrapper
+            setattr(self, attr_name, fn(self))
+        return getattr(self, attr_name)
+
+    return property(memoized)
