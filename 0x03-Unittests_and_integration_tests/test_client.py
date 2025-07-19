@@ -11,10 +11,13 @@ class TestGithubOrgClient(unittest.TestCase):
     """Tests for GithubOrgClient class."""
 
     @parameterized.expand([
-        ("google", {"repos_url": "https://api.github.com/orgs/google/repos", "login": "google_org_name"}), # Line too long, will fix
-        ("abc", {"repos_url": "https://api.github.com/orgs/abc/repos", "login": "abc_org_name"}), # Line too long, will fix
+        # Pycodestyle E501 and E261 fixes applied here
+        ("google", {"repos_url": "https://api.github.com/orgs/google/repos",
+                     "login": "google_org_name"}),  # example payload
+        ("abc", {"repos_url": "https://api.github.com/orgs/abc/repos",
+                 "login": "abc_org_name"}),  # example payload
     ])
-    @patch("client.get_json") # Patch where get_json is imported in client.py
+    @patch("client.get_json")  # Patch where get_json is imported in client.py
     def test_org(self, org_name, expected_org_payload, mock_get_json):
         """Test that GithubOrgClient.org returns expected payload."""
         mock_get_json.return_value = expected_org_payload
@@ -66,7 +69,8 @@ class TestGithubOrgClient(unittest.TestCase):
             mock_public_repos_url.assert_called_once()
 
             # Test that the mocked get_json was called once
-            # It should have been called with the URL returned by the mocked _public_repos_url
+            # It should have been called with the URL returned by the mocked
+            # _public_repos_url
             mock_get_json.assert_called_once_with("https://api.github.com/orgs/alx/repos")
 
 
