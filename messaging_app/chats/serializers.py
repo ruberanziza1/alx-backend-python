@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from .models import User, Conversation, Message
-# from rest_framework.fields import CharField
-# from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
+from django.contrib.auth.models import User
+from .models import Message, Conversation
+from users.serializers import UserSerializer
 
 # User Serializer
 class UserSerializer(serializers.ModelSerializer):
