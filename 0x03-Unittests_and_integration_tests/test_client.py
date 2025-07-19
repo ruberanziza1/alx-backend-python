@@ -13,7 +13,7 @@ class TestGithubOrgClient(unittest.TestCase):
         ("google",),
         ("abc",),
     ])
-    @patch('client.get_json')
+    @patch('utils.get_json')
     def test_org(self, org_name, mock_get_json):
         """Test that GithubOrgClient.org returns the correct value."""
         # Set up test payload
@@ -23,7 +23,7 @@ class TestGithubOrgClient(unittest.TestCase):
         # Create client instance
         client = GithubOrgClient(org_name)
         
-        # Call org method
+        # Call org property (memoized method becomes a property)
         result = client.org
         
         # Assert get_json was called once with expected URL
