@@ -39,7 +39,7 @@ class TestGetJson(unittest.TestCase):
     ])
     @patch("utils.requests.get")
     def test_get_json(self, test_url, test_payload, mock_get):
-        """Test get_json returns expected data and calls requests.get"""
+        """Test get_json returns expected data and calls requests.get once"""
         mock_get.return_value = Mock(json=Mock(return_value=test_payload))
         result = get_json(test_url)
         mock_get.assert_called_once_with(test_url)
