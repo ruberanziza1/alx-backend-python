@@ -1,27 +1,38 @@
-#!/usr/bin/env python3
-"""Unit tests for client.py"""
-import unittest
-from unittest.mock import patch
-from parameterized import parameterized
-from client import GithubOrgClient
+# utils.py
+import requests
+import functools
 
+def get_json(url: str) -> dict:
+    """Fetches JSON data from a given URL."""
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.json()
 
-class TestGithubOrgClient(unittest.TestCase):
-    """Tests for GithubOrgClient class."""
+def access_nested_map(nested_map: dict, path: list):
+    """Accesses a value in a nested dictionary using a list of keys."""
+    # This is a common implementation for access_nested_map
+    for key in path:
+        nested_map = nested_map[key]
+    return nested_map
 
-    @parameterized.expand([
-        ("google",),
-        ("abc",),
-    ])
-    def test_org(self, org_name):
-        """Test that GithubOrgClient.org returns the correct value."""
-        with patch('utils.get_json') as mock_get_json:
-            test_payload = {"repos_url": "https://api.github.com/users/test/repos", "login": org_name}
-            mock_get_json.return_value = test_payload
-            client = GithubOrgClient(org_name)
-            self.assertEqual(client.org, test_payload)
-            mock_get_json.assert_called_once_with("https://api.github.com/orgs/{}".format(org_name))
+def memoize(func):
+    """Decorator to cache the results of a method call."""
+    cache = {}
+    @functools.wraps(func)
+    def memoized_func(*args, **kwargs):
+        if args in cache:
+            return cache[args]
+        result = func(*args, **kwargs)
+        cache[args] = result
+        return result
+    return memoized_func
 
-
-if __name__ == "__main__":
-    unittest.main()
+# For a simpler memoize that just works for methods without args beyond self:
+# def memoize(func):
+#     attr_name = '_memoized_' + func.__name__
+#     @functools.wraps(func)
+#     def memoized_wrapper(self, *args, **kwargs):
+#         if not hasattr(self, attr_name):
+#             setattr(self, attr_name, func(self, *args, **kwargs))
+#         return getattr(self, attr_name)
+#     return memoized_wrapper
