@@ -14,26 +14,26 @@ class TestGithubOrgClient(unittest.TestCase):
         ("google",),
         ("abc",),
     ])
-    @patch("client.get_json")  # Patch get_json where client uses it
+    @patch("client.get_json")  # Patch where get_json is imported in client.py
     def test_org(self, org_name, mock_get_json):
-        """Test that GithubOrgClient.org returns expected data."""
+        """Test that GithubOrgClient.org returns expected payload."""
         expected_payload = {
             "repos_url": f"https://api.github.com/users/{org_name}/repos",
             "login": org_name,
         }
 
-        # Setup mock to return expected_payload without executing real HTTP calls
+        # Setup the mock to return expected payload
         mock_get_json.return_value = expected_payload
 
         client = GithubOrgClient(org_name)
 
-        # Call the org property which internally calls the mocked get_json
+        # Call the org property
         result = client.org
 
-        # Assert the result matches expected payload
+        # Assert the result matches expected
         self.assertEqual(result, expected_payload)
 
-        # Assert get_json was called once with the correct URL
+        # Assert get_json called once with the correct URL
         mock_get_json.assert_called_once_with(f"https://api.github.com/orgs/{org_name}")
 
 
