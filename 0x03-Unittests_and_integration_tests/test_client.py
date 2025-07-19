@@ -4,58 +4,70 @@
 import unittest
 from unittest.mock import patch, PropertyMock
 from parameterized import parameterized
-from client import GithubOrgClient # This imports GithubOrgClient and makes client.get_json available for patching
+from client import GithubOrgClient
+
 
 class TestGithubOrgClient(unittest.TestCase):
     """Tests for GithubOrgClient class."""
 
     @parameterized.expand([
-        ("google", {"repos_url": "https://api.github.com/orgs/google/repos", "login": "google_org_name"}),
-        ("abc", {"repos_url": "https://api.github.com/orgs/abc/repos", "login": "abc_org_name"}),
+        ("google", {"repos_url": "https://api.github.com/orgs/google/repos", "login": "google_org_name"}), # Line too long, will fix
+        ("abc", {"repos_url": "https://api.github.com/orgs/abc/repos", "login": "abc_org_name"}), # Line too long, will fix
     ])
-    @patch("client.get_json") # Patch the get_json function within the 'client' module
+    @patch("client.get_json") # Patch where get_json is imported in client.py
     def test_org(self, org_name, expected_org_payload, mock_get_json):
         """Test that GithubOrgClient.org returns expected payload."""
-
-        # Configure the mock to return the specific payload for each test case
         mock_get_json.return_value = expected_org_payload
 
-        # Instantiate the client
         client = GithubOrgClient(org_name)
 
-        # Call the 'org' property
+        # Call the org property
         result = client.org
 
-        # Assert that the result matches the expected payload
+        # Assert the result matches expected
         self.assertEqual(result, expected_org_payload)
 
-        # Assert that get_json was called exactly once with the correct URL
+        # Assert get_json called once with the correct URL
         mock_get_json.assert_called_once_with(f"https://api.github.com/orgs/{org_name}")
 
-    # Adding a test for _public_repos_url if you implement it later.
-    # This test relies on mocking the 'org' property directly using PropertyMock.
-    @patch('client.GithubOrgClient.org', new_callable=PropertyMock)
-    def test_public_repos_url(self, mock_org):
-        """Test that _public_repos_url returns the correct URL based on org data."""
-        # Define the mock return value for the 'org' property
-        mock_org.return_value = {"repos_url": "https://api.github.com/orgs/alx-holberton/repos"}
+    @patch("client.get_json")  # Mock get_json (decorator)
+    def test_public_repos(self, mock_get_json):
+        """
+        Tests GithubOrgClient.public_repos by mocking _public_repos_url
+        and get_json.
+        """
+        # Define the payload that get_json will return when called by public_repos
+        mock_repos_payload = [
+            {"name": "alx-repo-1", "license": {"key": "mit"}},
+            {"name": "alx-project", "license": {"key": "apache-2.0"}},
+            {"name": "holberton-repo", "license": None},
+        ]
+        mock_get_json.return_value = mock_repos_payload
 
-        client = GithubOrgClient("alx-holberton")
+        # Use patch as a context manager for _public_repos_url
+        # We need to target the property for mocking.
+        # PropertyMock ensures it behaves like a property.
+        with patch('client.GithubOrgClient._public_repos_url',
+                   new_callable=PropertyMock) as mock_public_repos_url:
+            # Set the return value for the mocked _public_repos_url property
+            mock_public_repos_url.return_value = \
+                "https://api.github.com/orgs/alx/repos"
 
-        # Assuming _public_repos_url will look like this in client.py:
-        # @property
-        # def _public_repos_url(self) -> str:
-        #     return self.org["repos_url"]
-        # If it's a private method, you might need to test the public method that uses it.
-        # For this test, we are directly accessing a hypothetical _public_repos_url property.
+            # Instantiate the client (org_name doesn't matter here due to mocking)
+            client = GithubOrgClient("alx")
 
-        # This line will cause an AttributeError if _public_repos_url is not a property
-        # or if it's not implemented yet. If you don't have this property in client.py yet,
-        # comment out this test for now.
-        # self.assertEqual(client._public_repos_url, "https://api.github.com/orgs/alx-holberton/repos")
+            # Call the public_repos method
+            repos = client.public_repos()
 
-        # Assert that the 'org' property was called to get the repos_url
-        mock_org.assert_called_once()
+            # Assert that the list of repos is what we expect
+            self.assertEqual(repos, ["alx-repo-1", "alx-project", "holberton-repo"])
+
+            # Test that the mocked _public_repos_url property was called once
+            mock_public_repos_url.assert_called_once()
+
+            # Test that the mocked get_json was called once
+            # It should have been called with the URL returned by the mocked _public_repos_url
+            mock_get_json.assert_called_once_with("https://api.github.com/orgs/alx/repos")
 
 
 if __name__ == "__main__":
