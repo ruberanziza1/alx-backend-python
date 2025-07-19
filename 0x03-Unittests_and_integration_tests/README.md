@@ -1,11 +1,15 @@
 Unittests and Integration Tests
+
 This project contains tasks for learning to write unittests and integration tests in Python 3.
+
 
 Required Modules
 parameterized.
 Tasks To Complete
  0. Parameterize a unit test
+ 
 test_utils.py contains a python module that meets the following requirements:
+
 
 Familiarize yourself with the utils.access_nested_map function and understand its purpose. Play with it in the Python console to make sure you understand.
 In this task you will write the first unit test for utils.access_nested_map.
@@ -17,14 +21,18 @@ nested_map={"a": {"b": 2}}, path=("a",)
 nested_map={"a": {"b": 2}}, path=("a", "b")
 For each of these inputs, test with assertEqual that the function returns the expected result.
 The body of the test method should not be longer than 2 lines.
+
  1. Parameterize a unit test
+    
 test_utils.py contains a python module that meets the following requirements:
 
 Implement TestAccessNestedMap.test_access_nested_map_exception. Use the assertRaises context manager to test that a KeyError is raised for the following inputs (use @parameterized.expand):
 nested_map={}, path=("a",)
 nested_map={"a": 1}, path=("a", "b")
 Also make sure that the exception message is as expected.
+
  2. Mock HTTP calls
+    
 test_utils.py contains a python module that meets the following requirements:
 
 Familiarize yourself with the utils.get_json function.
@@ -34,7 +42,9 @@ test_url="http://example.com", test_payload={"payload": True}
 test_url="http://holberton.io", test_payload={"payload": False}
 Test that the mocked get method was called exactly once (per input) with test_url as argument.
 Test that the output of get_json is equal to test_payload.
+
  3. Parameterize and patch
+    
 test_utils.py contains a python module that meets the following requirements:
 
 Read about memoization and familiarize yourself with the utils.memoize decorator.
