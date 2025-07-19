@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Unit tests for utils.py"""
+
 import unittest
-from utils import access_nested_map, get_json, memoize
 from parameterized import parameterized
 from unittest.mock import patch, Mock
+from utils import access_nested_map, get_json, memoize
 
 
 class TestAccessNestedMap(unittest.TestCase):
-    """Tests for access_nested_map"""
+    """Tests for the access_nested_map function"""
 
     @parameterized.expand([
         ({"a": 1}, ("a",), 1),
@@ -15,7 +16,7 @@ class TestAccessNestedMap(unittest.TestCase):
         ({"a": {"b": 2}}, ("a", "b"), 2),
     ])
     def test_access_nested_map(self, nested_map, path, expected):
-        """Test access_nested_map returns expected value"""
+        """Test that access_nested_map returns expected values"""
         self.assertEqual(access_nested_map(nested_map, path), expected)
 
     @parameterized.expand([
@@ -23,14 +24,14 @@ class TestAccessNestedMap(unittest.TestCase):
         ({"a": 1}, ("a", "b")),
     ])
     def test_access_nested_map_exception(self, nested_map, path):
-        """Test KeyError is raised on missing key"""
+        """Test that access_nested_map raises KeyError for invalid paths"""
         with self.assertRaises(KeyError) as cm:
             access_nested_map(nested_map, path)
         self.assertEqual(str(cm.exception), f"'{path[-1]}'")
 
 
 class TestGetJson(unittest.TestCase):
-    """Tests for get_json"""
+    """Tests for the get_json function"""
 
     @parameterized.expand([
         ("http://example.com", {"payload": True}),
@@ -38,7 +39,7 @@ class TestGetJson(unittest.TestCase):
     ])
     @patch("utils.requests.get")
     def test_get_json(self, test_url, test_payload, mock_get):
-        """Test get_json returns correct JSON response"""
+        """Test get_json returns expected data and calls requests.get"""
         mock_get.return_value = Mock(json=Mock(return_value=test_payload))
         result = get_json(test_url)
         mock_get.assert_called_once_with(test_url)
@@ -46,10 +47,10 @@ class TestGetJson(unittest.TestCase):
 
 
 class TestMemoize(unittest.TestCase):
-    """Tests for memoize"""
+    """Tests for the memoize decorator"""
 
     def test_memoize(self):
-        """Test memoization stores value after first call"""
+        """Test that memoize caches the result after first call"""
 
         class TestClass:
             def a_method(self):
