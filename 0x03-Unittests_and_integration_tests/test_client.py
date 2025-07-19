@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Unit tests for client.GithubOrgClient"""
-
 import unittest
 from unittest.mock import patch
 from parameterized import parameterized
@@ -9,7 +8,7 @@ from client import GithubOrgClient
 
 class TestGithubOrgClient(unittest.TestCase):
     """Tests for GithubOrgClient class."""
-
+    
     @parameterized.expand([
         # Parameterized test cases for different organization names
         # Each tuple contains (org_name, expected_payload_from_get_json)
@@ -27,16 +26,16 @@ class TestGithubOrgClient(unittest.TestCase):
         # Configure the mock_get_json to return the specific expected_payload
         # when it is called by client.GithubOrgClient.org
         mock_get_json.return_value = expected_payload
-
+        
         # Instantiate the GithubOrgClient with the current organization name
         client = GithubOrgClient(org_name)
-
+        
         # Access the 'org' property, which should trigger the mocked get_json call
         result = client.org
-
+        
         # Assert that the result returned by client.org matches our expected payload
         self.assertEqual(result, expected_payload)
-
+        
         # Assert that the mocked get_json was called exactly once
         # with the correct GitHub API URL for the organization
         mock_get_json.assert_called_once_with(f"https://api.github.com/orgs/{org_name}")
