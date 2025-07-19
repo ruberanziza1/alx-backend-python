@@ -29,5 +29,9 @@ class ConversationSerializer(serializers.ModelSerializer):
     def get_messages(self, obj):
         messages = obj.messages.all()
         return MessageSerializer(messages, many=True).data
+        def validate_custom_field(self, value):
+        if some_condition:
+            raise serializers.ValidationError("Custom validation message")
+        return value
 
 # Ensure imports of CharField and ValidationError are included
