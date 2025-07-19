@@ -1,1 +1,23 @@
+# client.py
+import requests
 
+def get_json(url: str):
+    """Fetches JSON data from a given URL."""
+    response = requests.get(url)
+    response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+    return response.json()
+
+class GithubOrgClient:
+    """A client to interact with the GitHub API for organizations."""
+    def __init__(self, org_name: str):
+        self.org_name = org_name
+
+    @property
+    def org(self) -> dict:
+        """Returns the organization payload from the GitHub API."""
+        return get_json(f"https://api.github.com/orgs/{self.org_name}")
+
+    # You might have other methods like _public_repos_url, public_repos, etc.
+    # @property
+    # def _public_repos_url(self) -> str:
+    #     return self.org["repos_url"]
