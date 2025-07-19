@@ -1,25 +1,37 @@
-# client.py
-import requests
+#!/usr/bin/env python3
+"""Test cases for client.py"""
 
-def get_json(url: str):
-    """Fetches JSON data from a given URL."""
-    response = requests.get(url)
-    response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
-    return response.json()
+import unittest
+from unittest.mock import patch
+from parameterized import parameterized
+from client import GithubOrgClient
 
-class GithubOrgClient:
-    """A client to interact with the GitHub API for organizations."""
-    def __init__(self, org_name: str):
-        self.org_name = org_name
-        # Internal cache for organization data to prevent repeated API calls
-        self._org = None
 
-    @property
-    def org(self) -> dict:
-        """
-        Returns the organization payload from the GitHub API.
-        Caches the result after the first call.
-        """
-        if self._org is None:
-            self._org = get_json(f"https://api.github.com/orgs/{self.org_name}")
-        return self._org
+class TestGithubOrgClient(unittest.TestCase):
+    """Test cases for GithubOrgClient"""
+
+    @parameterized.expand([
+        ("google",),
+        ("abc",),
+    ])
+    @patch('client.get_json')
+    def test_org(self, org_name, mock_get_json):
+        """Test that GithubOrgClient.org returns the correct value"""
+        # Set up the mock return value
+        expected_result = {"name": org_name, "type": "Organization"}
+        mock_get_json.return_value = expected_result
+        
+        # Create GithubOrgClient instance and call org method
+        client = GithubOrgClient(org_name)
+        result = client.org
+        
+        # Assert that get_json was called once with the expected URL
+        expected_url = f"https://api.github.com/orgs/{org_name}"
+        mock_get_json.assert_called_once_with(expected_url)
+        
+        # Assert that the result is what we expect
+        self.assertEqual(result, expected_result)
+
+
+if __name__ == '__main__':
+    unittest.main()
