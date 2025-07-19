@@ -16,8 +16,3 @@ class GithubOrgClient:
     def org(self) -> dict:
         """Returns the organization payload from the GitHub API."""
         return get_json(f"https://api.github.com/orgs/{self.org_name}")
-
-    # You might have other methods like _public_repos_url, public_repos, etc.
-    # @property
-    # def _public_repos_url(self) -> str:
-    #     return self.org["repos_url"]
