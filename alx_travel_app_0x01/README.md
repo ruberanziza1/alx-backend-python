@@ -1,27 +1,25 @@
-# alx_travel_app_0x01
+# Milestone 3: Creating Views and API Endpoints
 
-This Django project provides a REST API for managing travel listings and bookings.
+## Creating Views and API Endpoints
 
-## Features
+### Objective
 
-- CRUD API for Listings and Bookings
-- RESTful endpoints with Django REST Framework
-- Swagger UI for documentation
+Build API views to manage listings and bookings, and ensure the endpoints are documented with Swagger.
 
-## Endpoints
+## Instructions
 
-| Method | Endpoint            | Description              |
-|--------|---------------------|--------------------------|
-| GET    | /api/listings/      | List all listings        |
-| POST   | /api/listings/      | Create new listing       |
-| GET    | /api/bookings/      | List all bookings        |
-| POST   | /api/bookings/      | Create new booking       |
+- ### Duplicate Project:
 
-## API Documentation
+    - Duplicate the project `alx_travel_app_0x00` to `alx_travel_app_0x01`
+- ### Create ViewSets:
 
-Visit `/swagger/` for interactive Swagger UI.
+  - In listings/views.py, create viewsets for Listing and Booking using Django REST framework’s ModelViewSet.
+  - Ensure that these views provide CRUD operations for both models.
 
-## Setup
+- ### Configure URLs:
 
-```bash
-python manage.py runserver# alx_travel_app_0x01
+  - Use a router to configure URLs for the API endpoints.
+  - Ensure endpoints follow RESTful conventions and are accessible under /api/.
+- ### Test Endpoints:
+
+  - Test each endpoint (GET, POST, PUT, DELETE) using a tool like Postman to ensure they work as expected.
