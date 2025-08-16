@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: messaging-app-green
+  labels:
+    app: messaging-app
+    track: green
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: messaging-app
+      version: green
+  template:
+    metadata:
+      labels:
+        app: messaging-app
+        version: green
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/YOURUSER/messaging-app:1.1
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet: { path: "/", port: 8000 }
+          livenessProbe:
+            httpGet: { path: "/", port: 8000 }
+

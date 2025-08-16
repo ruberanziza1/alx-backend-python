@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+NS="${NS:-default}"
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || { echo "Missing dependency: $1"; exit 1; }
+}
+
+echo "==> Checking dependencies"
+need docker
+need minikube
+need kubectl
+
+echo "==> Starting minikube (driver=docker)"
+minikube status >/dev/null 2>&1 || true
+minikube start --driver=docker
+
+echo "==> Ensuring addons (metrics-server, ingress)"
+minikube addons enable metrics-server >/dev/null
+minikube addons enable ingress >/dev/null
+
+echo "==> Current context & nodes"
+kubectl config current-context
+kubectl get nodes -o wide
+
+echo "==> Waiting for nodes to be Ready"
+kubectl wait --for=condition=Ready nodes --all --timeout=180s
+
+echo "==> Cluster info"
+kubectl cluster-info
+
+echo "==> All pods (all namespaces)"
+kubectl get pods -A
+
+echo "Done."
+

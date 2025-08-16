@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_LABEL="app=messaging-app"
+SERVICE="messaging-app"
+PORT_LOCAL="${PORT_LOCAL:-8000}"
+PORT_SVC=8000
+DURATION="${DURATION:-20s}"
+
+need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing: $1"; exit 1; }; }
+
+need kubectl
+need wrk
+
+echo "==> Scale to 3 replicas"
+kubectl scale deployment/messaging-app --replicas=3
+kubectl rollout status deployment/messaging-app --timeout=180s
+
+echo "==> Pods"
+kubectl get pods -l "$APP_LABEL" -o wide
+
+echo "==> Port-forward svc/$SERVICE to localhost:$PORT_LOCAL"
+kubectl port-forward svc/"$SERVICE" "$PORT_LOCAL":"$PORT_SVC" >/tmp/pf.log 2>&1 &
+PF_PID=$!
+sleep 3
+
+cleanup() {
+  echo "==> Cleanup port-forward"
+  kill $PF_PID >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+
+URL="http://127.0.0.1:${PORT_LOCAL}/"
+echo "==> Load test with wrk ($DURATION) at $URL"
+wrk -t2 -c40 -d"$DURATION" "$URL" || true
+
+echo "==> Resource usage (needs metrics-server)"
+kubectl top pods -l "$APP_LABEL" || echo "kubectl top requires metrics-server; ensure addon is enabled."
+
+echo "Done."
+
