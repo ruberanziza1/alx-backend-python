@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SVC="messaging-app"
+PORT_LOCAL="${PORT_LOCAL:-8000}"
+URL="http://127.0.0.1:${PORT_LOCAL}/"
+DURATION="${DURATION:-30}"   # seconds to probe
+
+need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing: $1"; exit 1; }; }
+need kubectl
+need curl
+
+echo "==> Port-forward service/$SVC to localhost:$PORT_LOCAL"
+kubectl port-forward svc/"$SVC" "$PORT_LOCAL:8000" >/tmp/pf_rollout.log 2>&1 &
+PF_PID=$!
+sleep 3
+
+fail=0
+echo "==> Start background curl loop for ${DURATION}s against $URL"
+(
+  end=$((SECONDS + DURATION))
+  while [ $SECONDS -lt $end ]; do
+    if ! curl -fsS "$URL" >/dev/null; then
+      fail=$((fail+1))
+    fi
+    sleep 0.2
+  done
+  echo "$fail" > /tmp/curl_fail_count
+) &
+CURL_PID=$!
+
+echo "==> Apply updated blue deployment"
+kubectl apply -f blue_deployment.yaml
+
+echo "==> Watch rollout"
+kubectl rollout status deployment/messaging-app-blue --timeout=300s
+
+wait $CURL_PID || true
+CURL_FAILS=$(cat /tmp/curl_fail_count 2>/dev/null || echo 0)
+echo "==> Curl failures during rollout: ${CURL_FAILS}"
+
+echo "==> Pods after rollout"
+kubectl get pods -l app=messaging-app -o wide
+
+echo "==> Cleanup port-forward"
+kill $PF_PID >/dev/null 2>&1 || true
