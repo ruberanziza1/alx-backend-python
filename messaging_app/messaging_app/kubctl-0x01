@@ -1,41 +1,30 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
-APP_LABEL="app=messaging-app"
-SERVICE="messaging-app"
-PORT_LOCAL="${PORT_LOCAL:-8000}"
-PORT_SVC=8000
-DURATION="${DURATION:-20s}"
+# Exit if any command fails
+set -e
 
-need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing: $1"; exit 1; }; }
+echo "=== Scaling Django App Deployment to 3 replicas ==="
+kubectl scale deployment messaging-app-deployment --replicas=3
 
-need kubectl
-need wrk
+echo "=== Waiting for pods to be ready ==="
+kubectl rollout status deployment/messaging-app-deployment
 
-echo "==> Scale to 3 replicas"
-kubectl scale deployment/messaging-app --replicas=3
-kubectl rollout status deployment/messaging-app --timeout=180s
+echo "=== Current pods ==="
+kubectl get pods -l app=messaging-app
 
-echo "==> Pods"
-kubectl get pods -l "$APP_LABEL" -o wide
-
-echo "==> Port-forward svc/$SERVICE to localhost:$PORT_LOCAL"
-kubectl port-forward svc/"$SERVICE" "$PORT_LOCAL":"$PORT_SVC" >/tmp/pf.log 2>&1 &
+echo "=== Port-forwarding service to localhost:8000 ==="
+# Run in background
+kubectl port-forward svc/messaging-app-service 8000:8000 >/dev/null 2>&1 &
 PF_PID=$!
-sleep 3
 
-cleanup() {
-  echo "==> Cleanup port-forward"
-  kill $PF_PID >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
+# Give port-forward a few seconds to establish
+sleep 5
 
-URL="http://127.0.0.1:${PORT_LOCAL}/"
-echo "==> Load test with wrk ($DURATION) at $URL"
-wrk -t2 -c40 -d"$DURATION" "$URL" || true
+echo "=== Running load test with wrk (10s, 10 threads, 100 connections) ==="
+wrk -t10 -c100 -d10s http://127.0.0.1:8000/ || echo "wrk not installed. Please install: sudo apt install wrk"
 
-echo "==> Resource usage (needs metrics-server)"
-kubectl top pods -l "$APP_LABEL" || echo "kubectl top requires metrics-server; ensure addon is enabled."
+echo "=== Monitoring resource usage (CPU/Memory) ==="
+kubectl top pods || echo "Metrics server may not be installed. Install with: minikube addons enable metrics-server"
 
-echo "Done."
-
+# Kill port-forward process
+kill $PF_PID

@@ -1,17 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: messaging-app
+  name: messaging-app-deployment
   labels:
     app: messaging-app
 spec:
-  replicas: 1
-  revisionHistoryLimit: 5
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+  replicas: 2   # run 2 pods for redundancy
   selector:
     matchLabels:
       app: messaging-app
@@ -21,50 +15,34 @@ spec:
         app: messaging-app
     spec:
       containers:
-        - name: web
-          image: ghcr.io/YOURUSER/messaging-app:1.0
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 8000
-          env:
-            - name: DJANGO_SETTINGS_MODULE
-              value: messaging_app.settings
-            # add DB/REDIS/etc env here
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 2
-            failureThreshold: 6
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8000
-            initialDelaySeconds: 15
-            periodSeconds: 10
-            timeoutSeconds: 2
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
+      - name: messaging-app-container
+        image: messaging-app:latest   # Use your built image name/tag
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          value: messaging_app.settings
+        - name: DATABASE_URL
+          value: postgres://user:password@postgres-service:5432/messaging_db
+        # add any other env vars like SECRET_KEY here
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: messaging-app
-  labels:
-    app: messaging-app
+  name: messaging-app-service
 spec:
-  type: ClusterIP
   selector:
     app: messaging-app
   ports:
-    - name: http
-      port: 8000
-      targetPort: 8000
-
+    - protocol: TCP
+      port: 8000        # service port
+      targetPort: 8000  # container port
+  type: ClusterIP       # internal-only service

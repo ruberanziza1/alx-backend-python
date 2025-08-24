@@ -11,6 +11,12 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+import os
+
+from django.conf.global_settings import AUTH_USER_MODEL
+
+AUTH_USER_MODEL = 'chats.User'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,14 +26,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^p+h9mgj#n#&wwalnm996a5vh8_t)%u42sa4g-e*+=*5&b3%n2'
+SECRET_KEY = 'django-insecure-m-3jhw__ub24!2dkj@h79$=%hen5acr(^uzj0ua1=sx^8sah#z'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
-AUTH_USER_MODEL = 'chats.User'
 
 # Application definition
 
@@ -39,9 +44,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework_simplejwt',
     'chats',
-    'django_filters',
+    'rest_framework_simplejwt',
+    'django_extensions'
 ]
 
 MIDDLEWARE = [
@@ -54,21 +59,31 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    "USER_ID_FIELD": "user_id",
+}
 
+# Django REST Framework config
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend'
-    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+            'django_filters.rest_framework.DjangoFilterBackend'
+        ],
 }
 
 ROOT_URLCONF = 'messaging_app.urls'
@@ -96,14 +111,21 @@ WSGI_APPLICATION = 'messaging_app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('MYSQL_DATABASE', 'messaging_db'),
-        'USER': os.getenv('MYSQL_USER', 'messaging_user'),
-        'PASSWORD': os.getenv('MYSQL_PASSWORD', 'strongpassword123'),
-        'HOST': os.getenv('MYSQL_HOST', 'localhost'),  # Will be 'db' inside docker-compose
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': os.getenv('MYSQL_DB', 'messaging_db'),
+#         'USER': os.getenv('MYSQLUSER', 'messaging_user'),
+#         'PASSWORD': os.getenv('MYSQL_PASSWORD', 'strong_password_here'),
+#         'HOST': 'db',
+#         'PORT': '3306',
+#     }
+# }
 
 
 # Password validation
